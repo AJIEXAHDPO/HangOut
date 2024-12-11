@@ -94,11 +94,15 @@ var mutex sync.Mutex
 // Signalling controller.
 // Sends offers and answers to the clients
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	addCorsHeaders(w)
+
 	con, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("failed to upgrade connection", err)
 	}
 	defer con.Close()
+	var user = r.Context().Value(&UserClaims{}).(*UserClaims)
+	go addConn(user.UserInfo.ID, con, &mutex)
 
 	for {
 		var buff ConnectionMessage
@@ -106,12 +110,27 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Println("failed to read message", err)
 			break
 		}
-		sendTo(string(buff.TargetID), buff)
+		go sendTo(buff.TargetID, buff, &mutex)
 	}
 }
 
 // send to client
-func sendTo(userID string, message ConnectionMessage) {}
+func sendTo(userID uint, message ConnectionMessage, mutex *sync.Mutex) {
+	mutex.Lock()
+	for _, con := range clients[userID] {
+		if err := con.WriteJSON(message); err != nil {
+			log.Println("failed to send json:", err)
+		}
+	}
+	mutex.Unlock()
+}
+
+// add connection
+func addConn(userID uint, conn *websocket.Conn, mutex *sync.Mutex) {
+	mutex.Lock()
+	clients[userID][len(clients[userID])] = conn
+	mutex.Unlock()
+}
 
 // register
 func register(w http.ResponseWriter, r *http.Request) {
