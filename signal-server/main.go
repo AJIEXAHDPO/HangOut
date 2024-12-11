@@ -153,15 +153,15 @@ func register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hash := sha256.Sum256([]byte(req.Password))
-	// if err := DB.Model(&User{}).Create(User{
-	// 	Name:  req.Name,
-	// 	Hash:  hex.EncodeToString(hash[:]),
-	// 	Email: req.Email,
-	// }).Error; err != nil {
-	// 	log.Println("error", http.StatusBadRequest, "failed to create user")
-	// 	http.Error(w, "bad request", http.StatusBadRequest)
-	// 	return
-	// }
+	if err := DB.Create(&User{
+		Name:  req.Name,
+		Hash:  hex.EncodeToString(hash[:]),
+		Email: req.Email,
+	}).Error; err != nil {
+		log.Println("error", http.StatusBadRequest, "failed to create user")
+		http.Error(w, "user with such name or email already exists", http.StatusUnprocessableEntity)
+		return
+	}
 	log.Println("created", hex.EncodeToString(hash[:]))
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Add("Content-Type", "application/json")
