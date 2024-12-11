@@ -348,9 +348,12 @@ func init() {
 }
 
 func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		addCorsHeaders(w)
+	})
 	http.HandleFunc("/ws", checkAuth(handleWebSocket))
-	http.HandleFunc("/register", register)
-	http.HandleFunc("/auth", auth)
+	http.HandleFunc("POST /register", register)
+	http.HandleFunc("POST /auth", auth)
 	log.Println("server is listening on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
