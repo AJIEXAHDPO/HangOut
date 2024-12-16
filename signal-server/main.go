@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -79,7 +78,7 @@ type UserConnections struct {
 func addCorsHeaders(w http.ResponseWriter) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie")
 	w.Header().Add("Access-Control-Allow-Credentials", "true")
 }
 
@@ -88,7 +87,7 @@ var (
 	publicKey  []byte
 )
 
-var clients map[uint][]*websocket.Conn
+var clients map[uint][]*websocket.Conn = make(map[uint][]*websocket.Conn)
 var mutex sync.Mutex
 
 // Signalling controller.
@@ -101,7 +100,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		log.Println("failed to upgrade connection", err)
 	}
 	defer con.Close()
-	var user = r.Context().Value(&UserClaims{}).(*UserClaims)
+	var user = r.Context().Value(UserClaims{}).(*UserClaims)
+	log.Println(user)
 	go addConn(user.UserInfo.ID, con, &mutex)
 
 	for {
@@ -128,7 +128,11 @@ func sendTo(userID uint, message ConnectionMessage, mutex *sync.Mutex) {
 // add connection
 func addConn(userID uint, conn *websocket.Conn, mutex *sync.Mutex) {
 	mutex.Lock()
-	clients[userID][len(clients[userID])] = conn
+	log.Println("adding", userID)
+	if clients[userID] == nil {
+		clients[userID] = make([]*websocket.Conn, 0)
+	}
+	clients[userID] = append(clients[userID], conn)
 	mutex.Unlock()
 }
 
@@ -254,14 +258,14 @@ func checkAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		addCorsHeaders(w)
 
-		auth := r.Header.Get("Authorisation")
-		tokenStr, found := strings.CutPrefix(auth, "Bearer ")
-		if !found {
+		fmt.Println(r.Cookies())
+		tokenStr, err := r.Cookie("token")
+		if err != nil {
 			log.Println("error", http.StatusForbidden, "no token provided")
 			http.Error(w, "no token provided", http.StatusForbidden)
 			return
 		}
-		token, err := vaildateToken(tokenStr)
+		token, err := vaildateToken(tokenStr.Value)
 		if err != nil {
 			log.Println("validation failed:", err)
 			log.Println("error", http.StatusBadRequest, "validation failed")
@@ -275,7 +279,7 @@ func checkAuth(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Not validid json token", http.StatusForbidden)
 		}
 		log.Println("auth token is:", tokenStr)
-		ctx := context.WithValue(r.Context(), &UserClaims{}, claims)
+		ctx := context.WithValue(r.Context(), UserClaims{}, claims)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	}
@@ -283,8 +287,9 @@ func checkAuth(next http.HandlerFunc) http.HandlerFunc {
 
 // checks if it is the valid token
 func vaildateToken(tokenString string) (*jwt.Token, error) {
-	publicKeyParsed, err := jwt.ParseRSAPrivateKeyFromPEM(publicKey)
+	publicKeyParsed, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
 	if err != nil {
+		log.Println("error", http.StatusForbidden, "failed to parse public key")
 		return nil, err
 	}
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(t *jwt.Token) (interface{}, error) {
@@ -294,6 +299,7 @@ func vaildateToken(tokenString string) (*jwt.Token, error) {
 		return publicKeyParsed, nil
 	})
 	if err != nil {
+		log.Println("error", http.StatusForbidden, "failed to parse token")
 		return nil, err
 	}
 
@@ -355,5 +361,7 @@ func main() {
 	http.HandleFunc("POST /register", register)
 	http.HandleFunc("POST /auth", auth)
 	log.Println("server is listening on http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalln(err.Error())
+	}
 }
