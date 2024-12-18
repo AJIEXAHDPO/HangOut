@@ -1,7 +1,7 @@
 export type User = {
     name: string,
     fio: string,
-    id: string,
+    id: number,
     avatar: string,
     lastSeen: string,
     isOnline: boolean,
@@ -11,7 +11,7 @@ export type User = {
 }
 
 export type Call = {
-    id: string,
+    id: number,
     type: string, // "incoming" | "outgoing" | "missed"
     duration: string,
     finishedAt: string,

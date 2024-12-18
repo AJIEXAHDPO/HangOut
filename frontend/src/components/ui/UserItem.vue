@@ -5,10 +5,10 @@
             <span>{{ user.fio }}</span>
         </div>
         <div class="flex-row-items-center">
-            <button @click="makeCall" class="btn-ghost">
+            <button @click="() => makeCall(false)" class="btn-ghost">
                 <CallIcon />
             </button>
-            <button @click="makeCall" class="btn-ghost">
+            <button @click="() => makeCall(true)" class="btn-ghost">
                 <VideoCallIcon />
             </button>
         </div>
@@ -21,38 +21,18 @@ import VideoCallIcon from '@/components/icons/IconVideoCall.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { defineProps } from 'vue'
 import { type User } from "@/types"
+import { useCallStore } from '@/stores/call'
 
 const { user } = defineProps<{
     user: User,
 }>()
 
-const makeCall = () => {
-    console.log('makeCall')
-
+const callStore = useCallStore()
+const makeCall = async (isVideo: boolean) => {
+    if (isVideo) {
+        await callStore.makeCall(user, true, true)
+    } else {
+        await callStore.makeCall(user, false, true)
+    }
 }
 </script>
-
-
-<style>
-.user-li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 20px;
-    /* border: 1px solid #ccc; */
-    margin: 5px;
-    border-radius: 16px;
-    background: #fff;
-    width: 100%;
-}
-
-.user-li:hover {
-    background: #f5f5f5;
-}
-
-.flex-row-items-center {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-</style>
