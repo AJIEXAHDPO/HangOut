@@ -31,7 +31,7 @@ onMounted(() => {
         {
             name: 'John Doe',
             fio: 'Дoe Джон',
-            id: '1',
+            id: 1,
             avatar: 'https://example.com/avatar1.jpg',
             lastSeen: '10:30 AM',
             isOnline: true,
@@ -42,7 +42,7 @@ onMounted(() => {
         {
             name: 'Jane Smith',
             fio: 'Смит Джейн',
-            id: '2',
+            id: 2,
             avatar: 'https://example.com/avatar2.jpg', 
             lastSeen: 'Yesterday',
             isOnline: false,
@@ -53,7 +53,7 @@ onMounted(() => {
         {
             name: 'Mike Johnson',
             fio: 'Джонсон Майк',
-            id: '3',
+            id: 3,
             avatar: 'https://example.com/avatar3.jpg', lastSeen: '11:00 AM',
             isOnline: true,
             isTyping: false,
@@ -63,7 +63,7 @@ onMounted(() => {
         {
             name: 'Sarah Brown',
             fio: 'Браун Сара',
-            id: '4',
+            id: 4,
             avatar: 'https://example.com/avatar4.jpg', lastSeen: '1 hour ago',
             isOnline: false,
             isTyping: false,
@@ -73,7 +73,7 @@ onMounted(() => {
         {
             name: 'David Miller',
             fio: 'Миллер Дэвид',
-            id: '5',
+            id: 5,
             avatar: 'https://example.com/avatar5.jpg', lastSeen: '12:45 PM',
             isOnline: true,
             isTyping: false,
