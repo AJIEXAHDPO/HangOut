@@ -31,9 +31,14 @@ type Offer map[string]interface{}
 type Answer map[string]interface{}
 
 type ConnectionMessage struct {
-	TargetID uint   `json:"targetId"`
-	Payload  string `json:"payload"`
-	Type     string `json:"type"`
+	TargetID uint        `json:"targetId"`
+	Payload  interface{} `json:"payload"`
+	Type     string      `json:"type"`
+}
+
+type ResentMessage struct {
+	*ConnectionMessage
+	FromUser uint `json:"fromUser"`
 }
 
 type AuthRequest struct {
@@ -110,16 +115,24 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Println("failed to read message", err)
 			break
 		}
-		go sendTo(buff.TargetID, buff, &mutex)
+		if buff.Type != "ping" {
+			go sendTo(buff.TargetID, user.UserInfo.ID, buff, &mutex)
+		}
 	}
 }
 
 // send to client
-func sendTo(userID uint, message ConnectionMessage, mutex *sync.Mutex) {
+func sendTo(userID uint, fromUser uint, message ConnectionMessage, mutex *sync.Mutex) {
 	mutex.Lock()
 	for _, con := range clients[userID] {
-		if err := con.WriteJSON(message); err != nil {
+		if err := con.WriteJSON(ResentMessage{
+			&message,
+			fromUser,
+		}); err != nil {
 			log.Println("failed to send json:", err)
+			if message.Type == "answer" {
+				log.Println("failed sending answer to", userID, err)
+			}
 		}
 	}
 	mutex.Unlock()
@@ -338,6 +351,17 @@ func init() {
 		Hash:  hex.EncodeToString(hash[:]),
 	}).FirstOrCreate(&user).Error; err != nil {
 
+	}
+	DB.Save(&user)
+	hash2 := sha256.Sum256([]byte("12345aA"))
+	if err := DB.Model(&User{
+		ID: 2,
+	}).Attrs(&User{
+		Name:  "testUser2",
+		Email: "lesha.iv03@gmail.com",
+		Hash:  hex.EncodeToString(hash2[:]),
+	}).FirstOrCreate(&user).Error; err != nil {
+		log.Fatalln("faied to migrate database", err)
 	}
 	DB.Save(&user)
 	// public key
