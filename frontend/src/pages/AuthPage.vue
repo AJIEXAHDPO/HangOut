@@ -4,12 +4,13 @@
         <form @submit="login" id="login-form">
             <h1 id="app-title">HangOut</h1>
             <label>Name
-                <input type="text" placeholder="Name" v-model="name" />
+                <input type="text" placeholder="Name" v-model="name" required />
             </label>
             <label>Password
-                <input type="password" placeholder="Password" v-model="password" />
+                <input type="password" placeholder="Password" v-model="password" required />
             </label>
             <button type="submit" class="btn btn-primary">Login</button>
+            <a href="/register">Don't have an account?</a>
         </form>
     </main>
 </template>
