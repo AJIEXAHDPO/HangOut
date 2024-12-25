@@ -24,3 +24,24 @@ export type Contant = {
     isBlocked: boolean,
     isMuted: boolean,
 }
+
+export type Message = {
+    type: "reject" | "candidate" | "offer" | "answer" | "ping" | "pong",
+    payload: any,
+    targetId: number,
+}
+
+export type IncomingMessage = {
+    type: "reject" | "candidate" | "offer" | "answer" | "ping" | "pong",
+    payload: any,
+    targetId: number,
+    fromUser: number,
+}
+
+export type Participant = {
+    media: MediaStream,
+    isVideo: boolean,
+    isAudio: boolean,
+    // user: User,
+    name: string,
+}

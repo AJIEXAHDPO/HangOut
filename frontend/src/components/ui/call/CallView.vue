@@ -7,8 +7,8 @@
                 <button class="btn">options</button>
             </div>
             <div class="call-participants">
-                <template v-for="user, idx in callStore.callUsers">
-                <CallParticipant  v-if="idx > 0" :fio="'fff'" :srcobject="user.stream" />
+                <template v-for="user, idx in callStore.participants">
+                <CallParticipant  v-if="idx > 0" :fio="'fff'" :srcobject="user.media" />
                 </template>
             </div>
             <button v-if="isMinimised" class="maximise-btn" @dragstart="(e) => e.preventDefault()"

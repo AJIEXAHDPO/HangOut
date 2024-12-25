@@ -1,5 +1,5 @@
 <template>
-    <div class="user-icon" :class="{ rounded }" :style="{backgroundColor: color}">
+    <div class="user-icon" :class="computedClass" :style="{ backgroundColor: color }">
         {{ letters }}
     </div>
 </template>
@@ -10,9 +10,11 @@ import { computed } from 'vue';
 const {
     rounded = false,
     fio,
+    class: classList = ""
 } = defineProps<{
     rounded?: boolean,
     fio: string,
+    class?: string,
 }>()
 
 const color = computed(() => {
@@ -22,6 +24,12 @@ const color = computed(() => {
         case 2: return "#FF2D55"; // red
         case 3: return "#FF2D55"; // red
         default: return "#34C759"; // green
+    }
+})
+const computedClass = computed(() => {
+    return {
+        rounded: rounded,
+        [classList]: classList !== ""
     }
 })
 
@@ -45,7 +53,9 @@ const letters = computed(() => {
     font-weight: 500;
     color: white;
     margin-right: 4px;
+    text-transform: capitalize;
 }
+
 .rounded {
     border-radius: 999999px;
 }

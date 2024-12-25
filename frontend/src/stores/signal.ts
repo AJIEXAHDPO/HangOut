@@ -1,3 +1,4 @@
+import type { IncomingMessage, Message } from "@/types";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
@@ -66,16 +67,3 @@ export const useSignalStore = defineStore("signal", () => {
         domain
     }
 })
-
-export type Message = {
-    type: "reject" | "candidate" | "offer" | "answer" | "ping" | "pong",
-    payload: any,
-    targetId: number,
-}
-
-export type IncomingMessage = {
-    type: "reject" | "candidate" | "offer" | "answer" | "ping" | "pong",
-    payload: any,
-    targetId: number,
-    fromUser: number,
-}

@@ -29,8 +29,8 @@ onMounted(() => {
 
     const users: User[] = [
         {
-            name: 'John Doe',
-            fio: 'Дoe Джон',
+            name: 'testUser',
+            fio: 'Ноут',
             id: 1,
             avatar: 'https://example.com/avatar1.jpg',
             lastSeen: '10:30 AM',
@@ -40,9 +40,9 @@ onMounted(() => {
             isAdmin: false,
         },
         {
-            name: 'Jane Smith',
-            fio: 'Смит Джейн',
-            id: 2,
+            name: 'testUser2',
+            fio: 'Планшет',
+            id: 12,
             avatar: 'https://example.com/avatar2.jpg', 
             lastSeen: 'Yesterday',
             isOnline: false,
