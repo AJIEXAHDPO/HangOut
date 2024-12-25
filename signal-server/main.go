@@ -125,6 +125,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 func sendTo(userID uint, fromUser uint, message ConnectionMessage, mutex *sync.Mutex) {
 	mutex.Lock()
 	for _, con := range clients[userID] {
+		if message.Type == "candidate" {
+			log.Println("sending candidate to", con.RemoteAddr().String(), userID)
+		}
 		if err := con.WriteJSON(ResentMessage{
 			&message,
 			fromUser,
@@ -297,6 +300,36 @@ func checkAuth(next http.HandlerFunc) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	}
 }
+func checkWSAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		addCorsHeaders(w)
+
+		fmt.Println(r.Cookies())
+		tokenStr := r.URL.Query().Get("token")
+		if tokenStr == "" {
+			log.Println("error", http.StatusForbidden, "no token provided")
+			http.Error(w, "no token provided", http.StatusForbidden)
+			return
+		}
+		token, err := vaildateToken(tokenStr)
+		if err != nil {
+			log.Println("validation failed:", err)
+			log.Println("error", http.StatusBadRequest, "validation failed")
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+
+		claims, ok := token.Claims.(*UserClaims)
+		if !ok {
+			log.Println("error", http.StatusForbidden, "Not validid json token")
+			http.Error(w, "Not validid json token", http.StatusForbidden)
+		}
+		log.Println("auth token is:", tokenStr)
+		ctx := context.WithValue(r.Context(), UserClaims{}, claims)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	}
+}
 
 // checks if it is the valid token
 func vaildateToken(tokenString string) (*jwt.Token, error) {
@@ -381,11 +414,20 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		addCorsHeaders(w)
 	})
-	http.HandleFunc("/ws", checkAuth(handleWebSocket))
+	http.HandleFunc("/ws", checkWSAuth(handleWebSocket))
 	http.HandleFunc("POST /register", register)
 	http.HandleFunc("POST /auth", auth)
+	http.HandleFunc("POST /contacts", addToContacts)
+	http.HandleFunc("GET /contacts", getContacts)
+	http.HandleFunc("GET /users", getUsers)
 	log.Println("server is listening on http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalln(err.Error())
 	}
 }
+
+func addToContacts(w http.ResponseWriter, r *http.Request) {}
+
+func getContacts(w http.ResponseWriter, r *http.Request) {}
+
+func getUsers(w http.ResponseWriter, r *http.Request) {}

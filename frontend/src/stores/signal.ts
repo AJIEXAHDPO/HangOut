@@ -5,8 +5,11 @@ export const useSignalStore = defineStore("signal", () => {
     const socket = ref<WebSocket | null>(null)
     const isConnected = ref(false);
     const connectionID = ref(0);
+    const domain = "f98d-178-66-157-117.ngrok-free.app";
+    // domain = localhost:8080
     const connect = () => {
-        socket.value = new WebSocket("ws://localhost:8080/ws");
+        const token = getTokenFomCookie();
+        socket.value = new WebSocket(`wss://${domain}/ws?token=${token}`);
         socket.value.onmessage = (event) => {
             console.log(event.data);
         }
@@ -46,12 +49,21 @@ export const useSignalStore = defineStore("signal", () => {
         )
     }
 
+    const getTokenFomCookie = () => {
+        const token = document.cookie.split(";").find(c => c.trim().startsWith("token="));
+        if (token) {
+            return token.split("=")[1];
+        }
+        return "";
+    }
+
     return {
         socket,
         isConnected,
         connect,
         sendMessage,
         on,
+        domain
     }
 })
 

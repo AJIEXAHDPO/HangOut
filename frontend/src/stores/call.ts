@@ -2,101 +2,98 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useSignalStore, type IncomingMessage } from "./signal";
 import type { User } from "@/types";
+import { useUserStore } from "./user";
 // import { useUserStore } from "@/stores/user";
 
 export const useCallStore = defineStore("call", () => {
     const isCalling = ref<boolean>(false);
-    const peerConnection = ref<RTCPeerConnection | null>(null);
     const callUsers = ref<UserStream[]>([]);
 
     const makeCall = async (user: User, isVideo: boolean, isAudio: boolean) => {
+        const signal = useSignalStore();
+
         console.log('makeCall')
-        const signalStore = useSignalStore()
-        isCalling.value = true;
-        // if (!userStore.user) {
-        //     alert("connection error")
-        //     return
-        // }
-        const userMedia = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { min: 1280, ideal: 1280, max: 1280 },
-                height: { min: 720, ideal: 720, max: 720 },
-                aspectRatio: 1,
-                frameRate: { ideal: 10, max: 10 },
-            }, audio: false
-        });
-        callUsers.value.push({
-            id: 1,
-            fio: "me",
-            stream: userMedia,
-        });
-
-        if (!signalStore.isConnected) {
-            alert("connection error")
-            return
-        }
-        peerConnection.value = new RTCPeerConnection({
+        const localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: isAudio });
+        const peerConnection = new RTCPeerConnection({
             iceServers: [
-                { urls: "stun:stun.l.google.com:19302" },
-                { urls: "stun:stun2.l.google.com:19302" },
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+                { urls: 'stun:stun.stunprotocol.org:3478' },
+                { urls: 'stun:stun.ekiga.net:3478' },
+                { urls: 'stun:stun.ideasip.com:3478' },
+                { urls: 'stun:stun.rixtelecom.se:3478' },
+                { urls: 'stun:stun.schlund.de:3478' },
+                { urls: 'stun:stun.voiparound.com:3478' },
+                { urls: 'stun:stun.voipbuster.com:3478' },
+                { urls: 'stun:stun.voipstunt.com:3478' },
+                { urls: 'stun:stun.voxgratia.org:3478' },
+                { urls: 'stun:stun.xten.com:3478' },
             ],
-            iceCandidatePoolSize: 10,
-        })
-        const offer = await peerConnection.value.createOffer()
-        await peerConnection.value.setLocalDescription(offer)
-        signalStore.sendMessage({
-            type: 'offer',
-            payload: offer,
-            targetId: user.id,
+        });
+
+        // localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        // peerConnection.ontrack = (event) => {
+        //     // получить видео на удаленный пир
+        //     callUsers.value.push({ fio: user.fio, stream: event.streams[0], id: user.id });
+        //     alert("track received on caller")
+        // };
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                // отправить кандидата на удаленный пир
+                signal.sendMessage({ type: "candidate", payload: event.candidate, targetId: user.id });
+            }
+        };
+
+        peerConnection.ontrack = (event) => {
+            // получить видео на удаленный пир
+            callUsers.value.push({fio: user.fio, stream: event.streams[0], id: user.id});
+            alert("track received on caller")
+        };
+
+        peerConnection.onconnectionstatechange = (event) => {
+            if (peerConnection.connectionState === "connected") {
+                alert('connected ' + callUsers.value.length + ' tracks');
+                isCalling.value = true;
+            } else if (peerConnection.connectionState === "failed") {
+                alert("connection failed"); 
+            }
+        }
+
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // отправить предложение на удаленный пир
+        signal.sendMessage({ type: "offer", payload: offer, targetId: user.id });
+
+        // установить ответ на удаленный пир
+        signal.on("answer", async (message: IncomingMessage) => {
+            // alert('answer')
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(message.payload));
+            // stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
         })
 
-        signalStore.on('answer', async (message: IncomingMessage) => {
-            await peerConnection.value?.setRemoteDescription(new RTCSessionDescription(message.payload))
-            peerConnection.value?.addEventListener('icecandidate', (event) => {
-                console.log("iceCandidate")
-                if (event.candidate) {
-                    signalStore.sendMessage({
-                        type: 'candidate',
-                        payload: event.candidate,
-                        targetId: user.id,
-                    })
-                }
-                console.log(event.candidate)
-            })
-
-            signalStore.on('candidate', async (message: IncomingMessage) => {
-                try {
-                    await peerConnection.value?.addIceCandidate(new RTCIceCandidate(message.payload))
-                } catch (error) {
-                    console.log(error)
-                }
-            })
-
-            peerConnection.value?.addEventListener("connectionstatechange", async () => {
-                console.log(peerConnection.value?.connectionState)
-                if (peerConnection.value?.connectionState === 'connected') {
-                    alert("call accepted")
-                    const userMedia = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: isAudio });
-                    userMedia.getTracks().forEach((track) => {
-                        peerConnection.value?.addTrack(track, userMedia);
-                    })
-
-                    peerConnection.value?.addEventListener("track", (event) => {
-                        console.log("call")
-                        callUsers.value.push({
-                            id: user.id,
-                            fio: user.fio,
-                            stream: event.streams[0],
-                        });
-                    })
-                }
-            })
+        signal.on("candidate", async (message: IncomingMessage) => {
+            console.log('candidate')
+            try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(message.payload));
+                callUsers.value.push(userStream);
+            } catch (e) {
+                console.warn(e)
+            }
         })
-        signalStore.on('reject', (message: IncomingMessage) => {
-            alert("user is buisy")
-            peerConnection.value?.close()
-            isCalling.value = false;
-        })
+
+        const userStream: UserStream = {
+            id: 1,
+            fio: "caller",
+            stream: localStream,
+        }
     }
 
     const hangUp = () => {
@@ -104,11 +101,22 @@ export const useCallStore = defineStore("call", () => {
         isCalling.value = false;
         callUsers.value = [];
     }
+
+    const setCalling = (value: boolean) => {
+        isCalling.value = value;
+    }
+
+    const addCallUser = (value: UserStream) => {
+        callUsers.value.push(value);
+    }
+
     return {
         isCalling,
         callUsers,
         makeCall,
         hangUp,
+        setCalling,
+        addCallUser,
     }
 })
 

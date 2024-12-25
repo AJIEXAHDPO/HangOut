@@ -3,10 +3,13 @@
         <div class="call-view" :class="{ 'minimised': isMinimised }">
             <div class="call-header" v-if="!isMinimised">
                 <button class="btn" @click="() => (isMinimised = true)">Back</button>
+                {{ "John Doe" }}
                 <button class="btn">options</button>
             </div>
             <div class="call-participants">
-                <CallParticipant v-for="user in callStore.callUsers" :fio="'fff'" :srcobject="user.stream" />
+                <template v-for="user, idx in callStore.callUsers">
+                <CallParticipant  v-if="idx > 0" :fio="'fff'" :srcobject="user.stream" />
+                </template>
             </div>
             <button v-if="isMinimised" class="maximise-btn" @dragstart="(e) => e.preventDefault()"
                 @click="() => (isMinimised = false)">full screen</button>
@@ -109,7 +112,6 @@ const callUsers = ref<CallUser[]>([]);
 
 .call-participants {
     display: flex;
-    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     padding: 10px;
@@ -117,5 +119,14 @@ const callUsers = ref<CallUser[]>([]);
     overflow: auto;
     height: 100%;
     width: 100%;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.minimised .call-participants {
+    flex-direction: column;
+    overflow: hidden;
+    flex-wrap: wrap;
+    padding: 0;
 }
 </style>

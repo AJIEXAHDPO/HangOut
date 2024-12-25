@@ -34,35 +34,36 @@ async function handleOffer(message: IncomingMessage) {
 }
 
 async function acceptCall(message: IncomingMessage) {
+  console.log("accept call")
   const peerConnection = new RTCPeerConnection(
     {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        { urls: 'stun:stun.ekiga.net:3478' },
+        { urls: 'stun:stun.ideasip.com:3478' },
+        { urls: 'stun:stun.rixtelecom.se:3478' },
+        { urls: 'stun:stun.schlund.de:3478' },
+        { urls: 'stun:stun.voiparound.com:3478' },
+        { urls: 'stun:stun.voipbuster.com:3478' },
+        { urls: 'stun:stun.voipstunt.com:3478' },
+        { urls: 'stun:stun.voxgratia.org:3478' },
+        { urls: 'stun:stun.xten.com:3478' },
       ],
       iceCandidatePoolSize: 10,
     }
   )
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(message.payload))
-  const answer = await peerConnection.createAnswer()
-  await peerConnection.setLocalDescription(answer)
 
-  signalStore.sendMessage({
-    type: "answer",
-    targetId: message.fromUser,
-    payload: answer,
-  })
-
-  peerConnection.addEventListener("icecandidate", (event) => {
+  peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
-      signalStore.sendMessage({
-        type: "candidate",
-        targetId: message.fromUser,
-        payload: event.candidate,
-      })
+      signalStore.sendMessage({ type: "candidate", targetId: message.fromUser, payload: event.candidate })
     }
     console.log(event.candidate)
-  })
+  }
 
   signalStore.on("candidate", async (message: IncomingMessage) => {
     try {
@@ -73,20 +74,42 @@ async function acceptCall(message: IncomingMessage) {
     }
   })
 
-  peerConnection.addEventListener("connectionstatechange", async () => {
+  peerConnection.onconnectionstatechange = async () => {
     if (peerConnection.connectionState === "connected") {
+      alert("connected")
       const userMedia = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       userMedia.getTracks().forEach((track) => peerConnection.addTrack(track, userMedia))
-      peerConnection.addEventListener("track", (event) => {
-        // const stream = event.streams[0]
-        // const video = document.createElement("video")
-        // video.srcObject = stream
-        // video.autoplay = true
-        // document.body.append(video)
-        console.log(event.streams[0])
+      callStore.setCalling(true)
+      callStore.addCallUser({
+        id: message.fromUser,
+        stream: userMedia,
+        "fio": "fio"
       })
     }
-  })
+  }
+
+  peerConnection.ontrack = (event) => {
+    // const stream = event.streams[0]
+    // const video = document.createElement("video")
+    // video.srcObject = stream
+    // video.autoplay = true
+    // document.body.append(video)
+    alert("track received")
+    callStore.addCallUser({
+      id: message.fromUser,
+      stream: event.streams[0],
+      "fio": "fio"
+    })
+  }
+
+  console.log(message)
+  const desc = new RTCSessionDescription(message.payload)
+  console.clear()
+  console.log(desc)
+  await peerConnection.setRemoteDescription(desc);
+  const answer = await peerConnection.createAnswer()
+  await peerConnection.setLocalDescription(answer)
+  signalStore.sendMessage({ type: "answer", targetId: message.fromUser, payload: answer })
 }
 
 </script>
@@ -95,4 +118,3 @@ async function acceptCall(message: IncomingMessage) {
   <RouterView />
   <CallView v-if="isAuth() && callStore.isCalling" />
 </template>
-

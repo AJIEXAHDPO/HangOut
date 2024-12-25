@@ -17,9 +17,11 @@
 
 <script setup lang="ts">
 import router from '@/router';
+import { useSignalStore } from '@/stores/signal';
 import { useUserStore } from '@/stores/user';
 import { ref } from 'vue'
 const user = useUserStore();
+const signalStore = useSignalStore();
 
 const name = ref('')
 const password = ref('')
@@ -27,7 +29,7 @@ const password = ref('')
 const login = (e: Event) => {
     e.preventDefault()
 
-    fetch("http://localhost:8080/auth", {
+    fetch(`https://${signalStore.domain}/auth`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -51,7 +53,7 @@ const login = (e: Event) => {
             throw new Error("no token provided")
         }
     }).catch(e => {
-        alert(e.message)
+        alert("Invalid login or password")
 
     })
 
