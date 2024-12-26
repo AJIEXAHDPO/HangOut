@@ -44,4 +44,5 @@ export type Participant = {
     isAudio: boolean,
     // user: User,
     name: string,
+    isMe: boolean,
 }

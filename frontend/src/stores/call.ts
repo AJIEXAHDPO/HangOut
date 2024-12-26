@@ -66,7 +66,7 @@ export const useCallStore = defineStore("call", () => {
     }
 
     const addCallUser = (value: Participant) => {
-        participants.value.push({ name: "oponent", media: value.media, isAudio: true, isVideo: true });
+        participants.value.push(value);
     }
 
     async function acceptCall(message: IncomingMessage, isAudio: true, isVideo: true) {
@@ -97,7 +97,13 @@ export const useCallStore = defineStore("call", () => {
     };
 
     const onTrackHandler = (event: RTCTrackEvent) => {
-        participants.value.push({ name: "oponent", media: event.streams[0], isAudio: true, isVideo: true })
+        for (const participant of participants.value) {
+            if (participant.media === event.streams[0]) {
+                alert("same track")
+                return
+            }
+        }
+        participants.value.push({ name: "oponent", media: event.streams[0], isAudio: true, isVideo: true, isMe: false })
         alert("track received on caller")
     }
 
@@ -115,6 +121,7 @@ export const useCallStore = defineStore("call", () => {
                 name: "me",
                 isAudio: true,
                 isVideo: true,
+                isMe: true
             })
         } else if (PEER.value?.connectionState === "failed") {
             alert("connection failed");

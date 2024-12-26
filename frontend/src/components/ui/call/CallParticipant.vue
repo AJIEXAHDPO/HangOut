@@ -1,9 +1,9 @@
 <template>
     <div class="video-container">
-        <video v-if="true" ref="video" autoplay></video>
+        <video v-if="true" ref="video" autoplay :muted="isMe"></video>
         <div v-else>
-            <UserAvatar :fio="props.fio" />
-            <span style="margin-top: 20px;">{{ props.fio }}</span>
+            <UserAvatar :fio="fio" />
+            <span style="margin-top: 20px;">{{ fio }}</span>
         </div>
     </div>
 </template>
@@ -12,16 +12,21 @@
 import { onMounted, useTemplateRef } from 'vue';
 import UserAvatar from '../UserAvatar.vue';
 
-const props = defineProps<{
+const {
+    srcobject,
+    fio,
+    isMe = false
+} = defineProps<{
     srcobject: MediaStream,
     fio: string,
+    isMe?: boolean,
 }>()
 
 const video = useTemplateRef('video');
 
 onMounted(async () => {
     if (!video.value) return;
-    video.value.srcObject = props.srcobject;
+    video.value.srcObject = srcobject;
     video.value.onloadedmetadata = () => video.value?.play();
 })
 
