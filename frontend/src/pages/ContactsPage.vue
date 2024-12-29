@@ -1,6 +1,5 @@
 <template>
-    <Header></Header>
-    <main>
+    <Layout>
         <h1>Contacts</h1>
         <ul v-if="contacts.length > 0">
             <UserItem v-for="contact in contacts" :key="contact.id" :user="contact" />
@@ -11,14 +10,14 @@
                 <a href="/add" style="text-align: center;">Add now</a>
             </div>
         </div>
-    </main>
+    </Layout>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { type User } from '@/types'
 import UserItem from '@/components/ui/UserItem.vue';
-import Header from '@/components/ui/Header.vue';
+import Layout from '@/layouts/layout.vue';
 
 const contacts = ref<User[]>([])
 
@@ -43,7 +42,7 @@ onMounted(() => {
             name: 'testUser2',
             fio: 'Планшет',
             id: 12,
-            avatar: 'https://example.com/avatar2.jpg', 
+            avatar: 'https://example.com/avatar2.jpg',
             lastSeen: 'Yesterday',
             isOnline: false,
             isTyping: false,

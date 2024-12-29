@@ -1,6 +1,5 @@
 <template>
-    <Header></Header>
-    <main>
+    <Layout>
         <h1>Calls</h1>
         <ul v-if="calls.length > 0">
             <CallItem v-for="call in calls" :key="call.id" :call="call" />
@@ -11,12 +10,12 @@
                 <RouterLink to="/contacts">Make call</RouterLink>
             </div>
         </div>
-    </main>
+    </Layout>
 </template>
 
 <script setup lang="ts">
 import CallItem from '@/components/ui/CallItem.vue';
-import Header from '@/components/ui/Header.vue'
+import Layout from '@/layouts/layout.vue';
 import type { Call } from '@/types';
 import { ref } from 'vue';
 
