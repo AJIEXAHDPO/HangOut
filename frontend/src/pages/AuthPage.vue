@@ -9,7 +9,8 @@
             <label>Password
                 <input type="password" placeholder="Password" v-model="password" required />
             </label>
-            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">{{isSubmitting? "Submitting..." : "Login"}}</button>
+            <span class="error-message">{{ errorMessage }}</span>
             <a href="/register">Don't have an account?</a>
         </form>
     </main>
@@ -25,10 +26,13 @@ const signalStore = useSignalStore();
 
 const name = ref('')
 const password = ref('')
+const errorMessage = ref('')
+const isSubmitting = ref(false)
 
 const login = (e: Event) => {
     e.preventDefault()
 
+    isSubmitting.value = true
     fetch(`https://${signalStore.domain}/auth`, {
         method: 'POST',
         headers: {
@@ -36,12 +40,12 @@ const login = (e: Event) => {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            name: name.value,
-            password: password.value,
+            name: name.value.trim(),
+            password: password.value.trim(),
         })
-    }).then(res => {
+    }).then(async res => {
         if (!res.ok) {
-            throw new Error(res.statusText);
+            throw new Error("authentication failed");
         }
         return res.json()
     }).then((data) => {
@@ -53,8 +57,15 @@ const login = (e: Event) => {
             throw new Error("no token provided")
         }
     }).catch(e => {
-        alert("Invalid login or password")
-
+        if (e.message === "authentication failed") {
+            errorMessage.value = "Invalid login or password"
+            password.value = ""
+        } else {
+            console.error("authentication error", e)
+            errorMessage.value = e.message
+        }
+    }).finally(() => {
+        isSubmitting.value = false
     })
 
 }
@@ -78,5 +89,14 @@ label {
     margin-bottom: 20px;
     font-weight: lighter;
     color: #007AFF;
+}
+
+.error-message {
+    color: red;
+    font-size: 12px;
+}
+
+button.button-primary:disabled {
+    opacity: .5;
 }
 </style>
