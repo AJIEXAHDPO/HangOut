@@ -1,26 +1,27 @@
 <template>
     <div class="call-controls">
         <button @click="toggleAudio">
-            <IconCall color="white" :width="20" :height="20" />
-            {{ audioEnabled ? "Sound on" : "Sound off" }}
+            <IconMicroOff v-if="audioEnabled" color="white" :width="20" :height="20" />
+            <IconMicroOff v-else color="white" :width="20" :height="20" />
+            <!-- {{ audioEnabled ? "Sound on" : "Sound off" }} -->
         </button>
         <button @click="toggleVideo">
             <IconVideoCall v-if="videoEnabled" color="white" :width="20" :height="20" />
             <IconVideoOff v-else color="white" :width="20" :height="20" />
-            {{ videoEnabled ? "Video on" : "Video off" }}
+            <!-- {{ videoEnabled ? "Video on" : "Video off" }} -->
         </button>
         <button @click="hangup" class="warn">
             <IconHangup color="white" :width="20" :height="20" />
-            Hangup
+            <!-- Hangup -->
         </button>
     </div>
 </template>
 
 <script setup lang="ts">
-import IconCall from '@/components/icons/IconCall.vue';
 import IconHangup from '@/components/icons/IconHangup.vue';
 import IconVideoCall from '@/components/icons/IconVideoCall.vue';
 import IconVideoOff from '@/components/icons/IconVideoOff.vue';
+import IconMicroOff from "@/components/icons/IconMicroOff.vue";
 
 const {
     videoEnabled,

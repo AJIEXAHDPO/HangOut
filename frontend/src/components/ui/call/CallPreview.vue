@@ -4,15 +4,25 @@
             <UserAvatar :fio="fio" rounded class="icon-big" />
             <div>{{ fio }}</div>
         </div>
-        <CallControls video-enabled audio-enabled />
+        <CallControls video-enabled audio-enabled @audio-change="handleAudio" @video-change="handleVideo"
+            @hangup="handleHangup" />
+        <audio src="/src/assets/connecting.mp3" hidden autoplay loop></audio>
     </div>
 </template>
 
 <script setup lang="ts">
+import { useCallStore } from '@/stores/call';
 import UserAvatar from '../UserAvatar.vue';
 import CallControls from './CallControls.vue';
 
 const { fio } = defineProps<{ fio: string }>();
+const callStore = useCallStore();
+
+const handleAudio = () => { }
+const handleVideo = () => { }
+const handleHangup = () => {
+    callStore.hangUp();
+}
 
 </script>
 <style>

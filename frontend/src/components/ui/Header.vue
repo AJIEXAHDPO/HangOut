@@ -1,7 +1,17 @@
 <template>
     <header>
         <div class="header">
+            <img src="/src/assets/santa-hat-transparent-drawn-3.webp" alt="" :style="{
+                width: '3rem',
+                height: '3rem',
+                position: 'absolute',
+                left: '56px',
+                top: '4px',
+                'margin-right': '1rem',
+                'border-radius': '50%',
+            }">
             <div class="logo">HangOut</div>
+            <UserInfo></UserInfo>
         </div>
         <nav>
             <RouterLink to="/">Calls</RouterLink>
@@ -11,6 +21,7 @@
 </template>
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import UserInfo from "@/components/ui/user/HeaderInfo.vue";
 </script>
 <style scoped>
 .header {
