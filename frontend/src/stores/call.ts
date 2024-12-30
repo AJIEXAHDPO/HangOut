@@ -8,8 +8,8 @@ export const useCallStore = defineStore("call", () => {
     const isCalling = ref<boolean>(false);
     const isConnecting = ref<boolean>(false);
     const participants = ref<Participant[]>([]);
-    const PEER = ref<RTCPeerConnection>();
-    const localStream = ref<MediaStream>();
+    const PEER = ref<RTCPeerConnection | null>(null);
+    const localStream = ref<MediaStream | null>(null);
     const signal = useSignalStore();
     const targetId = ref<number>(0);
 
@@ -53,12 +53,26 @@ export const useCallStore = defineStore("call", () => {
         signal.on("answer", async (message: IncomingMessage) => {
             await PEER.value?.setRemoteDescription(new RTCSessionDescription(message.payload));
         })
+        signal.on("reject", (message: IncomingMessage) => {
+            alert("User is buisy")
+            hangUp();
+        })
     }
 
     const hangUp = () => {
         console.log('hangOut')
         isCalling.value = false;
+        isConnecting.value = false;
+        participants.value.forEach(participant => {
+            participant.media.getTracks().forEach(track => track.stop());
+        })
         participants.value = [];
+        if (PEER.value) {
+            if (PEER.value.connectionState !== "closed") PEER.value.close();
+            PEER.value = null;
+        }
+        localStream.value?.getTracks().forEach(track => track.stop());
+        localStream.value = null;
     }
 
     const setCalling = (value: boolean) => {
@@ -111,8 +125,7 @@ export const useCallStore = defineStore("call", () => {
         if (PEER.value?.connectionState === "connected") {
             alert("connected")
             if (!localStream.value) {
-                const userMedia = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                localStream.value = userMedia;
+                localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             }
             isConnecting.value = false;
             isCalling.value = true;
@@ -125,6 +138,10 @@ export const useCallStore = defineStore("call", () => {
             })
         } else if (PEER.value?.connectionState === "failed") {
             alert("connection failed");
+            hangUp();
+        } else if (PEER.value?.connectionState === "disconnected") {
+            alert("call ended");
+            hangUp();
         }
     }
 
