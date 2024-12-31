@@ -56,7 +56,11 @@ Ensure you have the following installed:
 	```bash
 	npm run dev
  	```
- 4. 
+ 4. Start the backend
+	```bash
+ 	cd ../signal-server
+ 	go run .
+ 	```
 Open the app in your browser at http://localhost:3000. To test the app you also could use ngrok.
 ## 🤝 Contributions
 We’re always looking for contributors to help make HangUp even better! Whether it’s fixing bugs, improving performance, or adding new features, your efforts are welcome.
@@ -64,9 +68,9 @@ We’re always looking for contributors to help make HangUp even better! Whether
 ### How to Contribute
 Fork the repository.
 Create a feature branch:
-bash
-Copy code
+```bash
 git checkout -b feature/amazing-feature
 Commit your changes and open a pull request.
+```
 ## 📜 License
 HangUp is licensed under the MIT License.
